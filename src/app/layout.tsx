@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import Link from "next/link";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -23,11 +24,58 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="ko">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} min-h-screen bg-black text-white`}
       >
-        {children}
+        <header
+          className="fixed top-0 left-0 w-full h-14 border-b border-white/10
++                    bg-black/40 backdrop-blur-sm flex items-center px-5
++                    justify-between z-50 text-white"
+        >
+          <nav className="flex gap-4 text-sm" aria-label="주요 메뉴">
+            <Link
+              className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+              href="/"
+            >
+              대시보드
+            </Link>
+            <Link
+              className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+              href="/games"
+            >
+              게임
+            </Link>
+            <Link
+              className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+              href="/achievements"
+            >
+              업적
+            </Link>
+            <Link
+              className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+              href="/ranking"
+            >
+              랭킹
+            </Link>
+            <Link
+              className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+              href="/about"
+            >
+              소개
+            </Link>
+          </nav>
+          <div className="text-sm">
+            <a
+              href="/api/v1/auth/steam"
+              className="px-3 py-1.5 border border-white/40 text-white/90 rounded hover:bg-white/10 transition
+                  [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+            >
+              Steam 로그인
+            </a>
+          </div>
+        </header>
+        <main className="p-0">{children}</main>
       </body>
     </html>
   );
