@@ -3,18 +3,7 @@
 export default function Page() {
   return (
     <>
-      <section
-        className="relative text-white"
-        style={{
-          backgroundImage: "url('/bg-cyberpunk-hero.webp')",
-          backgroundSize: "cover",
-          backgroundPosition: "center top",
-          backgroundRepeat: "no-repeat",
-        }}
-      >
-        {/* 어둡게 오버레이 */}
-        <div className="absolute inset-0 bg-black/35" />
-
+      <section className="relative text-white">
         {/* 콘텐츠 영역 */}
         <div className="relative">
           {/* 1) 히어로: 헤더(56px) 제외하고 한 화면 꽉 */}
@@ -70,30 +59,8 @@ export default function Page() {
               </div>
             </div>
           </div>
-
-          {/* 2) ‘조금 스크롤’하면 보이는 법적 링크: 같은 배경 안에서 아래로 */}
-          <div aria-label="legal-links" className="py-10 text-xs text-white/85">
-            {/* 구분선 (선만) */}
-            <div className="mx-6 md:mx-8 mb-4 h-px bg-white/15" />
-            {/* 왼쪽으로 조금 더 붙이기 */}
-            <div className="ml-6 md:ml-8 flex flex-wrap items-center gap-x-6 gap-y-2">
-              <a href="/terms" className="hover:underline">
-                이용약관
-              </a>
-              <a href="/privacy" className="hover:underline">
-                개인정보 처리방침
-              </a>
-            </div>
-          </div>
         </div>
       </section>
-
-      {/* 홈에서는 레이아웃 푸터 숨김 (중복 방지) */}
-      <style jsx global>{`
-        .site-footer {
-          display: none;
-        }
-      `}</style>
     </>
   );
 }
