@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import FriendsList from "@/components/FriendsList";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -27,7 +29,17 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>
+          <div style={{ display: "flex", minHeight: "100vh" }}>
+            {/* 왼쪽: 모든 페이지 내용 */}
+            <div style={{ flex: 1, overflow: "auto" }}>
+              {children}
+            </div>
+            
+            {/* 오른쪽: 친구 목록 (모든 페이지에 표시) */}
+            <FriendsList />
+          </div>
+        </AuthProvider>
       </body>
     </html>
   );
