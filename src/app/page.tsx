@@ -1,12 +1,17 @@
 "use client";
 
+import Image from "next/image";
+
 export default function Page() {
+  const PROFILE = {
+    name: "AetherNova",
+    src: "/exprofile.png",
+  };
+
   return (
     <>
       <section className="relative text-white">
-        {/* 콘텐츠 영역 */}
         <div className="relative">
-          {/* 1) 히어로: 헤더(56px) 제외하고 한 화면 꽉 */}
           <div className="min-h-[calc(100dvh-56px)] flex flex-col items-center justify-center text-center px-6">
             <div className="w-full max-w-5xl mx-auto">
               <h1 className="text-5xl md:text-6xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 text-transparent bg-clip-text drop-shadow-[0_4px_24px_rgba(79,70,229,0.35)]">
@@ -18,12 +23,26 @@ export default function Page() {
               </p>
 
               <div className="mt-12 grid gap-5 sm:grid-cols-4">
-                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 text-left">
                   <h3 className="text-xs text-blue-300 mb-2">
                     RECENTLY PLAYED
                   </h3>
-                  <div className="h-16 w-full rounded-lg bg-[rgba(255,255,255,0.08)]" />
+
+                  <div className="h-16 w-full rounded-xl bg-white/10 border border-white/10 flex items-center gap-3 px-3">
+                    <Image
+                      src={PROFILE.src}
+                      alt={`${PROFILE.name} profile`}
+                      width={48}
+                      height={48}
+                      className="rounded-full ring-1 ring-white/20 object-cover"
+                      priority
+                    />
+                    <span className="text-lg font-semibold tracking-tight">
+                      {PROFILE.name}
+                    </span>
+                  </div>
                 </div>
+
                 <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
                   <h3 className="text-xs text-blue-300 mb-2">TOTAL PLAYTIME</h3>
                   <p className="text-5xl font-semibold tracking-tight drop-shadow-[0_4px_24px_rgba(59,130,246,0.35)]">
@@ -31,6 +50,7 @@ export default function Page() {
                   </p>
                   <p className="text-sm text-gray-300">hours</p>
                 </div>
+
                 <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
                   <h3 className="text-xs text-blue-300 mb-2">ACHIEVEMENTS</h3>
                   <p className="text-5xl font-semibold tracking-tight drop-shadow-[0_4px_24px_rgba(147,51,234,0.35)]">
@@ -38,6 +58,7 @@ export default function Page() {
                   </p>
                   <p className="text-sm text-gray-300">of 200</p>
                 </div>
+
                 <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
                   <h3 className="text-xs text-blue-300 mb-2">
                     PLAYTIME BY GAME
