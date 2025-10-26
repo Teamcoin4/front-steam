@@ -19,8 +19,39 @@
   }
 }
 
+/* 전역 배경/전경 + 폰트적용*/
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family:
+    var(--font-geist-sans),
+    ui-sans-serif,
+    system-ui,
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    Roboto,
+    "Noto Sans",
+    "Apple SD Gothic Neo",
+    "Malgun Gothic",
+    "Helvetica Neue",
+    "Arial",
+    "Noto Color Emoji",
+    "Apple Color Emoji",
+    sans-serif;
+}
+
+/* 코드/모노 계열 폰트 */
+code,
+pre,
+kbd,
+samp {
+  font-family:
+    var(--font-geist-mono), ui-monospace, SFMono-Regular, Menlo, Monaco,
+    Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+/* 다크/라이트 시스템 테마 힌트 */
+:root {
+  color-scheme: light dark;
 }
