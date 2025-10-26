@@ -46,7 +46,13 @@ export default function RootLayout({
           <nav className="flex gap-4 text-sm" aria-label="주요 메뉴">
             <Link
               className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
-              href="/dashboard"
+              href="/"
+            >
+              홈
+            </Link>
+            <Link
+              className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+              href="/dashboard/me"
             >
               대시보드
             </Link>
