@@ -36,7 +36,6 @@ export default function AuthButton() {
   const router = useRouter();
   const [authed, setAuthed] = useState<boolean>(false);
   const [me, setMe] = useState<Me | null>(null);
-  const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -54,7 +53,6 @@ export default function AuthButton() {
 
         if (!t) return;
 
-        setToken(t);
         setAuthed(true);
 
         const meResp = await fetch("/api/v1/me", {
@@ -70,23 +68,23 @@ export default function AuthButton() {
 
   // 로그아웃
   const onLogout = async () => {
-    const tryPost = async (url: string): Promise<boolean> => {
-      try {
-        const r = await fetch(url, { method: "POST", credentials: "include" });
-        return r.ok;
-      } catch {
-        return false;
-      }
-    };
+    try {
+      const res = await fetch("/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+      });
 
-    await tryPost("/api/v1/auth/logout");
-    await tryPost("/api/v1/auth/steam/logout");
+      await res.text();
 
-    setAuthed(false);
-    setToken(null);
-    setMe(null);
-    router.replace("/");
-    window.location.assign("/");
+      setMe(null);
+      setAuthed(false);
+
+      router.replace("/");
+    } catch (err) {
+      console.log(err);
+    }
   };
 
   if (!authed) {
@@ -103,6 +101,7 @@ export default function AuthButton() {
 
   return (
     <button
+      type="button"
       onClick={onLogout}
       className="px-3 py-1.5 rounded border border-white/40 text-white hover:bg-white/10 transition
                  [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
