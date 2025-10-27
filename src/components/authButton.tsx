@@ -1,13 +1,18 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-type Me = { id: number; personaName?: string | null };
+// 부모에서 내려줄 Props
+type User = {
+  id: number;
+  personaName?: string | null;
+};
 
+// 안전한 타입가드들
 function isObj(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null;
 }
-
 type AccessTokenTop = { accessToken: string };
 type AccessTokenNested = { data: { accessToken: string } };
 
@@ -23,22 +28,41 @@ function hasAccessTokenNested(x: unknown): x is AccessTokenNested {
     isObj(d) && typeof (d as Record<string, unknown>).accessToken === "string"
   );
 }
-
-type MeResponse = { data: Me };
-
-function isMeResponse(x: unknown): x is MeResponse {
-  if (!isObj(x)) return false;
-  const d = (x as Record<string, unknown>).data;
-  return isObj(d) && typeof (d as Record<string, unknown>).id === "number";
+function extractAccessToken(j: unknown): string | null {
+  if (hasAccessTokenTop(j)) return j.accessToken;
+  if (hasAccessTokenNested(j)) return j.data.accessToken;
+  return null;
 }
 
-export default function AuthButton() {
-  const router = useRouter();
-  const [authed, setAuthed] = useState<boolean>(false);
-  const [me, setMe] = useState<Me | null>(null);
-  const [token, setToken] = useState<string | null>(null);
+type MeEnvelope = { data?: { id: number; personaName?: string | null } };
 
+function hasMeEnvelope(x: unknown): x is MeEnvelope {
+  return isObj(x) && "data" in x;
+}
+
+type AuthButtonProps = {
+  isLoggedIn: boolean;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
+  accessToken: string | null;
+  setAccessToken: React.Dispatch<React.SetStateAction<string | null>>;
+  user: User | null;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
+};
+
+export default function AuthButton({
+  isLoggedIn,
+  setIsLoggedIn,
+  accessToken,
+  setAccessToken,
+  user,
+  setUser,
+}: AuthButtonProps) {
+  const router = useRouter();
+
+  // 로그인 상태 복구 (isLoggedIn === false && accessToken 없음일 때만 시도)
   useEffect(() => {
+    if (isLoggedIn || accessToken) return;
+
     (async () => {
       try {
         const r = await fetch("/api/v1/auth/steam/token", {
@@ -46,55 +70,57 @@ export default function AuthButton() {
           credentials: "include",
         });
         if (!r.ok) return;
+
         const j: unknown = await r.json();
+        const token = extractAccessToken(j);
+        if (!token) return;
 
-        let t: string | null = null;
-        if (hasAccessTokenTop(j)) t = j.accessToken;
-        else if (hasAccessTokenNested(j)) t = j.data.accessToken;
+        setAccessToken(token);
+        setIsLoggedIn(true);
 
-        if (!t) return;
-
-        setToken(t);
-        setAuthed(true);
-
-        const meResp = await fetch("/api/v1/me", {
-          headers: { Authorization: `Bearer ${t}` },
+        // 사용자 정보 요청
+        const meRes = await fetch("/api/v1/me", {
+          headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
-        if (!meResp.ok) return;
-        const mj: unknown = await meResp.json();
-        if (isMeResponse(mj)) setMe(mj.data);
-      } catch {}
+        if (!meRes.ok) return;
+
+        const mj: unknown = await meRes.json();
+        if (hasMeEnvelope(mj) && mj.data && typeof mj.data.id === "number") {
+          setUser({ id: mj.data.id, personaName: mj.data.personaName ?? null });
+        }
+      } catch {
+        // 비로그인 유지
+      }
     })();
-  }, []);
+  }, [isLoggedIn, accessToken, setAccessToken, setIsLoggedIn, setUser]);
 
   // 로그아웃
   const onLogout = async () => {
-    const tryPost = async (url: string): Promise<boolean> => {
-      try {
-        const r = await fetch(url, { method: "POST", credentials: "include" });
-        return r.ok;
-      } catch {
-        return false;
-      }
-    };
+    try {
+      const res = await fetch("/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+      });
+      await res.text();
 
-    await tryPost("/api/v1/auth/logout");
-    await tryPost("/api/v1/auth/steam/logout");
+      setAccessToken(null);
+      setUser(null);
+      setIsLoggedIn(false);
 
-    setAuthed(false);
-    setToken(null);
-    setMe(null);
-    router.replace("/");
-    window.location.assign("/");
+      router.replace("/");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
-  if (!authed) {
+  if (!isLoggedIn) {
     return (
       <a
         href="/api/v1/auth/steam"
-        className="px-3 py-1.5 rounded border border-white/40 text-white hover:bg-white/10 transition
-                   [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
+        className="px-3 py-1.5 rounded border border-white/40 text-white hover:bg-white/10 transition"
       >
         Steam 로그인
       </a>
@@ -103,10 +129,10 @@ export default function AuthButton() {
 
   return (
     <button
+      type="button"
       onClick={onLogout}
-      className="px-3 py-1.5 rounded border border-white/40 text-white hover:bg-white/10 transition
-                 [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
-      title={me?.personaName ? `${me.personaName} 로그아웃` : "로그아웃"}
+      className="px-3 py-1.5 rounded border border-white/40 text-white hover:bg-white/10 transition"
+      title={user?.personaName ? `${user.personaName} 로그아웃` : "로그아웃"}
       aria-label="로그아웃"
     >
       로그아웃
