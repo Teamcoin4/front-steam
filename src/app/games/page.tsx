@@ -1,5 +1,6 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 
 type Me = {
   id: number;
@@ -31,6 +32,45 @@ type OwnedGameApi = {
   } | null;
 };
 
+type AccessTokenTop = { accessToken: string };
+
+type AccessTokenNested = { data: { accessToken: string } };
+
+function hasAccessTokenTop(x: unknown): x is AccessTokenTop {
+  return (
+    isObject(x) &&
+    typeof (x as Record<string, unknown>).accessToken === "string"
+  );
+}
+function hasAccessTokenNested(x: unknown): x is AccessTokenNested {
+  if (!isObject(x)) return false;
+  const d = (x as Record<string, unknown>).data;
+  return (
+    isObject(d) &&
+    typeof (d as Record<string, unknown>).accessToken === "string"
+  );
+}
+function extractAccessToken(j: unknown): string | null {
+  if (hasAccessTokenTop(j)) return j.accessToken;
+  if (hasAccessTokenNested(j)) return j.data.accessToken;
+  return null;
+}
+
+type DataWithItems<T> = { data: { items: T[]; total?: number } };
+function hasDataWithItemsOwnedGameApi(
+  x: unknown
+): x is DataWithItems<OwnedGameApi> {
+  if (!isObject(x)) return false;
+  const d = (x as Record<string, unknown>).data;
+  if (!isObject(d)) return false;
+  return Array.isArray((d as Record<string, unknown>).items);
+}
+
+type MeEnvelope = { data: Partial<Me> | null | undefined };
+function hasMeEnvelope(x: unknown): x is MeEnvelope {
+  return isObject(x) && "data" in (x as Record<string, unknown>);
+}
+
 function isObject(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null;
 }
@@ -53,9 +93,7 @@ function toOwnedGameVM(g: OwnedGameApi): OwnedGame {
     headerImage: g.headerImage ?? null,
   };
 }
-// ====== [추가 끝] ======
 
-// (기존) 페이지네이션/Envelope 타입 (백엔드가 이 형태로도 내려올 수 있어 대비)
 interface Paged<T> {
   items: T[];
   page: number;
@@ -95,9 +133,6 @@ function fmtMinutes(min: number | null | undefined) {
   const h = Math.floor(min / 60);
   const m = min % 60;
   return h ? `${h}h ${m}m` : `${m}m`;
-}
-function clsx(...xs: Array<string | false | null | undefined>) {
-  return xs.filter(Boolean).join(" ");
 }
 function buildHeaderImage(game: OwnedGame) {
   if (game.headerImage) return game.headerImage;
@@ -145,18 +180,7 @@ export default function OwnedGamesPage() {
         });
         if (!r.ok) throw new Error("토큰 발급 실패");
         const j: unknown = await r.json();
-
-        // ✅ accessToken 파싱 강화 (data.accessToken 형태도 허용)
-        let accessToken: string | null = null;
-        if (isObject(j) && typeof (j as any).accessToken === "string") {
-          accessToken = (j as any).accessToken;
-        } else if (
-          isObject(j) &&
-          isObject((j as any).data) &&
-          typeof (j as any).data.accessToken === "string"
-        ) {
-          accessToken = (j as any).data.accessToken;
-        }
+        const accessToken = extractAccessToken(j);
         if (!accessToken) throw new Error("accessToken 없음");
 
         setToken(accessToken);
@@ -167,10 +191,14 @@ export default function OwnedGamesPage() {
           cache: "no-store",
         })
           .then((r2) => (r2.ok ? r2.json() : null))
-          .then((m) => {
-            if (isObject(m) && isObject(m.data)) {
-              const d = m.data as Partial<Me>;
-              if (typeof d.id === "number") setMe(d as Me);
+          .then((m: unknown) => {
+            if (
+              m &&
+              hasMeEnvelope(m) &&
+              m.data &&
+              typeof m.data.id === "number"
+            ) {
+              setMe(m.data as Me);
             }
           })
           .catch(() => void 0);
@@ -228,18 +256,13 @@ export default function OwnedGamesPage() {
         }
 
         // ✅ (3) 느슨한 data.items 모드 (백엔드가 data로 한 번 감싸서 줄 때)
-        if (isObject(raw) && isObject((raw as any).data)) {
-          const maybe = (raw as any).data as Record<string, unknown>;
-          if (Array.isArray(maybe.items)) {
-            const arr = (maybe.items as OwnedGameApi[]).map(toOwnedGameVM);
-            setItems(arr);
-            setTotal(
-              typeof maybe.total === "number"
-                ? (maybe.total as number)
-                : arr.length
-            );
-            return;
-          }
+        if (hasDataWithItemsOwnedGameApi(raw)) {
+          const arr = raw.data.items.map(toOwnedGameVM);
+          setItems(arr);
+          setTotal(
+            typeof raw.data.total === "number" ? raw.data.total : arr.length
+          );
+          return;
         }
 
         // 파싱 실패 시 빈 목록
@@ -279,10 +302,13 @@ export default function OwnedGamesPage() {
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           {me?.avatar ? (
-            <img
+            <Image
               src={me.avatar}
               alt="avatar"
+              width={40}
+              height={40}
               className="h-10 w-10 rounded-full border border-white/10 object-cover"
+              unoptimized
             />
           ) : (
             <div className="h-10 w-10 rounded-full bg-gray-700" />
@@ -355,13 +381,15 @@ export default function OwnedGamesPage() {
             {items.map((g) => (
               <li key={g.appId} className="flex items-center gap-4 p-4">
                 <div className="h-16 w-28 flex-none overflow-hidden rounded-lg bg-gray-800">
-                  <img
+                  <Image
                     src={buildHeaderImage(g)}
                     alt={g.name}
-                    className="h-full w-full object-cover"
-                    onError={(e) => {
-                      (e.currentTarget as HTMLImageElement).style.display =
-                        "none";
+                    fill
+                    className="object-cover"
+                    sizes="112px" // (w-28 = 112px 정도)
+                    unoptimized
+                    onError={() => {
+                      /* 필요 시 상태로 대체 이미지 처리 */
                     }}
                   />
                 </div>

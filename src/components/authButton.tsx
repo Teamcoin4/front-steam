@@ -3,23 +3,42 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-// ✅ 부모에서 내려줄 Props 정의
+// 부모에서 내려줄 Props
 type User = {
   id: number;
   personaName?: string | null;
 };
 
-type TokenResponse =
-  | { accessToken: string }
-  | { data: { accessToken: string } }
-  | object;
+// 안전한 타입가드들
+function isObj(x: unknown): x is Record<string, unknown> {
+  return typeof x === "object" && x !== null;
+}
+type AccessTokenTop = { accessToken: string };
+type AccessTokenNested = { data: { accessToken: string } };
 
-type MeResponse = {
-  data?: {
-    id: number;
-    personaName?: string | null;
-  };
-};
+function hasAccessTokenTop(x: unknown): x is AccessTokenTop {
+  return (
+    isObj(x) && typeof (x as Record<string, unknown>).accessToken === "string"
+  );
+}
+function hasAccessTokenNested(x: unknown): x is AccessTokenNested {
+  if (!isObj(x)) return false;
+  const d = (x as Record<string, unknown>).data;
+  return (
+    isObj(d) && typeof (d as Record<string, unknown>).accessToken === "string"
+  );
+}
+function extractAccessToken(j: unknown): string | null {
+  if (hasAccessTokenTop(j)) return j.accessToken;
+  if (hasAccessTokenNested(j)) return j.data.accessToken;
+  return null;
+}
+
+type MeEnvelope = { data?: { id: number; personaName?: string | null } };
+
+function hasMeEnvelope(x: unknown): x is MeEnvelope {
+  return isObj(x) && "data" in x;
+}
 
 type AuthButtonProps = {
   isLoggedIn: boolean;
@@ -40,74 +59,62 @@ export default function AuthButton({
 }: AuthButtonProps) {
   const router = useRouter();
 
-  // ✅ 로그인 상태 복구
+  // 로그인 상태 복구 (isLoggedIn === false && accessToken 없음일 때만 시도)
   useEffect(() => {
-    if (isLoggedIn) return;
+    if (isLoggedIn || accessToken) return;
 
     (async () => {
       try {
-        const response = await fetch("/api/v1/auth/steam/token", {
+        const r = await fetch("/api/v1/auth/steam/token", {
           method: "POST",
           credentials: "include",
         });
-        if (!response.ok) return;
+        if (!r.ok) return;
 
-        const tokenData: TokenResponse = await response.json();
-
-        const token =
-          ("accessToken" in tokenData && tokenData.accessToken) ||
-          ("data" in tokenData &&
-            tokenData.data &&
-            "accessToken" in tokenData.data &&
-            tokenData.data.accessToken) ||
-          null;
-
+        const j: unknown = await r.json();
+        const token = extractAccessToken(j);
         if (!token) return;
 
         setAccessToken(token);
         setIsLoggedIn(true);
 
-        // ✅ 사용자 정보 요청
+        // 사용자 정보 요청
         const meRes = await fetch("/api/v1/me", {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
         if (!meRes.ok) return;
 
-        const meData: MeResponse = await meRes.json();
-
-        if (meData.data?.id) {
-          setUser({
-            id: meData.data.id,
-            personaName: meData.data.personaName ?? null,
-          });
+        const mj: unknown = await meRes.json();
+        if (hasMeEnvelope(mj) && mj.data && typeof mj.data.id === "number") {
+          setUser({ id: mj.data.id, personaName: mj.data.personaName ?? null });
         }
       } catch {
-        // 실패 시 무시 (비로그인 상태 유지)
+        // 비로그인 유지
       }
     })();
-  }, [isLoggedIn, setAccessToken, setIsLoggedIn, setUser]);
+  }, [isLoggedIn, accessToken, setAccessToken, setIsLoggedIn, setUser]);
 
-  // ✅ 로그아웃 핸들러
+  // 로그아웃
   const onLogout = async () => {
-    const tryPost = async (url: string): Promise<boolean> => {
-      try {
-        const r = await fetch(url, { method: "POST", credentials: "include" });
-        return r.ok;
-      } catch {
-        return false;
-      }
-    };
+    try {
+      const res = await fetch("/api/v1/auth/logout", {
+        method: "POST",
+        credentials: "include",
+        keepalive: true,
+        headers: { "Content-Type": "application/json" },
+      });
+      await res.text();
 
-    await tryPost("/api/v1/auth/logout");
-    await tryPost("/api/v1/auth/steam/logout");
+      // 부모 상태 초기화
+      setAccessToken(null);
+      setUser(null);
+      setIsLoggedIn(false);
 
-    setIsLoggedIn(false);
-    setAccessToken(null);
-    setUser(null);
-
-    router.replace("/");
-    window.location.assign("/");
+      router.replace("/");
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   if (!isLoggedIn) {
@@ -123,6 +130,7 @@ export default function AuthButton({
 
   return (
     <button
+      type="button"
       onClick={onLogout}
       className="px-3 py-1.5 rounded border border-white/40 text-white hover:bg-white/10 transition"
       title={user?.personaName ? `${user.personaName} 로그아웃` : "로그아웃"}
