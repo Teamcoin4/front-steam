@@ -106,7 +106,6 @@ export default function AuthButton({
       });
       await res.text();
 
-      // 부모 상태 초기화
       setAccessToken(null);
       setUser(null);
       setIsLoggedIn(false);

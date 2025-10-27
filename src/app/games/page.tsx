@@ -380,7 +380,7 @@ export default function OwnedGamesPage() {
           <ul className="divide-y divide-white/5">
             {items.map((g) => (
               <li key={g.appId} className="flex items-center gap-4 p-4">
-                <div className="h-16 w-28 flex-none overflow-hidden rounded-lg bg-gray-800">
+                <div className="relative h-16 w-28 flex-none overflow-hidden rounded-lg bg-gray-800">
                   <Image
                     src={buildHeaderImage(g)}
                     alt={g.name}
