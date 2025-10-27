@@ -52,7 +52,7 @@ export default function RootLayout({
             </Link>
             <Link
               className="text-white/90 hover:text-white [text-shadow:0_1px_1px_rgba(0,0,0,.6)]"
-              href="/dashboard/me"
+              href="/dashboard"
             >
               대시보드
             </Link>
