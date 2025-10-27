@@ -112,7 +112,6 @@ export default function AuthButton({
       });
       await res.text();
 
-      // ✅ 상태 및 LocalStorage 초기화
       setAccessToken(null);
       localStorage.removeItem("accessToken"); // ✅ 추가
       setUser(null);
