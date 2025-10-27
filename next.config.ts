@@ -1,10 +1,11 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+import type { NextConfig } from "next";
+
+const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
         source: "/api/:path*",
-        destination: "http://localhost:3000/api/:path*",
+        destination: "http://localhost:3000/api/:path*", // ✅ 백엔드 3000으로 변경
       },
     ];
   },
@@ -16,4 +17,5 @@ const nextConfig = {
     ],
   },
 };
+
 export default nextConfig;
