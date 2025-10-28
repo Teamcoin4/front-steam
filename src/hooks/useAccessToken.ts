@@ -9,17 +9,20 @@ export function useAccessToken() {
   useEffect(() => {
     (async () => {
       try {
-        // ← refresh 쿠키 기준으로 access 발급
         const r = await fetch("/api/v1/auth/steam/token", {
           method: "POST",
-          credentials: "include", // 안전하게 유지
+          credentials: "include",
         });
         if (!r.ok) {
           setReady(true);
           return;
         }
+
         const j = await r.json();
-        if (j?.accessToken) setToken(j.accessToken);
+        if (j?.accessToken) {
+          setToken(j.accessToken);
+          localStorage.setItem("accessToken", j.accessToken);
+        }
       } catch (e) {
         console.error("token fetch failed:", e);
       } finally {

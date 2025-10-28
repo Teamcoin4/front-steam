@@ -53,7 +53,7 @@ export default function RootLayout({
           <nav className="flex gap-4 text-sm" aria-label="주요 메뉴">
             <Link href="/dashboard" className="text-white/90 hover:text-white">대시보드</Link>
             <Link href="/games" className="text-white/90 hover:text-white">게임</Link>
-            <Link href="/achievements" className="text-white/90 hover:text-white">업적</Link>
+            <Link href="/achievements/compare" className="text-white/90 hover:text-white">업적</Link>
             <Link href="/ranking" className="text-white/90 hover:text-white">랭킹</Link>
             <Link href="/about" className="text-white/90 hover:text-white">소개</Link>
           </nav>
