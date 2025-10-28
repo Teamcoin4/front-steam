@@ -60,7 +60,7 @@ export default function RootLayout({
               게임
             </Link>
             <Link
-              href="/achievements"
+              href="/achievements/compare"
               className="text-white/90 hover:text-white"
             >
               업적
