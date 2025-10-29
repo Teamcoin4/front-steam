@@ -8,6 +8,8 @@ import LegalLinks from "@/components/LegalLinks";
 import AuthButton from "@/components/authButton";
 import FriendsList from "@/components/friends/FriendsList"; // ✅
 import { useState } from "react";
+import ChatSocketBridge from "@/components/ChatSocketBridge";
+import ChatDock from "@/components/ChatDock";
 
 // ✅ 폰트 설정
 const geistSans = Geist({
@@ -51,11 +53,24 @@ export default function RootLayout({
                     justify-between z-50 text-white"
         >
           <nav className="flex gap-4 text-sm" aria-label="주요 메뉴">
-            <Link href="/dashboard" className="text-white/90 hover:text-white">대시보드</Link>
-            <Link href="/games" className="text-white/90 hover:text-white">게임</Link>
-            <Link href="/achievements/compare" className="text-white/90 hover:text-white">업적</Link>
-            <Link href="/ranking" className="text-white/90 hover:text-white">랭킹</Link>
-            <Link href="/about" className="text-white/90 hover:text-white">소개</Link>
+            <Link href="/dashboard" className="text-white/90 hover:text-white">
+              대시보드
+            </Link>
+            <Link href="/games" className="text-white/90 hover:text-white">
+              게임
+            </Link>
+            <Link
+              href="/achievements/compare"
+              className="text-white/90 hover:text-white"
+            >
+              업적
+            </Link>
+            <Link href="/ranking" className="text-white/90 hover:text-white">
+              랭킹
+            </Link>
+            <Link href="/about" className="text-white/90 hover:text-white">
+              소개
+            </Link>
           </nav>
 
           <div className="text-sm">
@@ -70,8 +85,14 @@ export default function RootLayout({
           </div>
         </header>
 
-        {/* ✅ 로그인된 경우만 친구 목록 표시 */}
-        {accessToken && <FriendsList accessToken={accessToken} />}
+        {/* ✅ 로그인 시 WS 브리지 + 좌측 도크 + 우측 친구목록 */}
+        {accessToken && user?.id ? (
+          <>
+            <ChatSocketBridge token={accessToken} meId={user.id} />
+            <ChatDock token={accessToken} meId={user.id} />
+            <FriendsList accessToken={accessToken} />
+          </>
+        ) : null}
 
         <main className="pt-20 p-0">{children}</main>
         <LegalLinks />
