@@ -13,6 +13,7 @@ type User = {
 function isObj(x: unknown): x is Record<string, unknown> {
   return typeof x === "object" && x !== null;
 }
+
 type AccessTokenTop = { accessToken: string };
 type AccessTokenNested = { data: { accessToken: string } };
 
@@ -21,6 +22,7 @@ function hasAccessTokenTop(x: unknown): x is AccessTokenTop {
     isObj(x) && typeof (x as Record<string, unknown>).accessToken === "string"
   );
 }
+
 function hasAccessTokenNested(x: unknown): x is AccessTokenNested {
   if (!isObj(x)) return false;
   const d = (x as Record<string, unknown>).data;
@@ -28,6 +30,7 @@ function hasAccessTokenNested(x: unknown): x is AccessTokenNested {
     isObj(d) && typeof (d as Record<string, unknown>).accessToken === "string"
   );
 }
+
 function extractAccessToken(j: unknown): string | null {
   if (hasAccessTokenTop(j)) return j.accessToken;
   if (hasAccessTokenNested(j)) return j.data.accessToken;
@@ -59,9 +62,9 @@ export default function AuthButton({
 }: AuthButtonProps) {
   const router = useRouter();
 
-  // 로그인 상태 복구 (isLoggedIn === false && accessToken 없음일 때만 시도)
+  // ✅ 로그인 상태 복구 (isLoggedIn만 체크 — accessToken 체크 제거)
   useEffect(() => {
-    if (isLoggedIn || accessToken) return;
+    if (isLoggedIn) return; // ✅ accessToken 체크 제거됨
 
     (async () => {
       try {
@@ -69,6 +72,7 @@ export default function AuthButton({
           method: "POST",
           credentials: "include",
         });
+
         if (!r.ok) return;
 
         const j: unknown = await r.json();
@@ -76,13 +80,15 @@ export default function AuthButton({
         if (!token) return;
 
         setAccessToken(token);
+        localStorage.setItem("accessToken", token); // ✅ 추가 (LocalStorage 저장)
         setIsLoggedIn(true);
 
-        // 사용자 정보 요청
+        // ✅ 사용자 정보 요청
         const meRes = await fetch("/api/v1/me", {
           headers: { Authorization: `Bearer ${token}` },
           cache: "no-store",
         });
+
         if (!meRes.ok) return;
 
         const mj: unknown = await meRes.json();
@@ -93,9 +99,9 @@ export default function AuthButton({
         // 비로그인 유지
       }
     })();
-  }, [isLoggedIn, accessToken, setAccessToken, setIsLoggedIn, setUser]);
+  }, [isLoggedIn, setAccessToken, setIsLoggedIn, setUser]); // ✅ accessToken 제거됨
 
-  // 로그아웃
+  // ✅ 로그아웃 시 LocalStorage도 제거 추천
   const onLogout = async () => {
     try {
       const res = await fetch("/api/v1/auth/logout", {
@@ -107,6 +113,7 @@ export default function AuthButton({
       await res.text();
 
       setAccessToken(null);
+      localStorage.removeItem("accessToken"); // ✅ 추가
       setUser(null);
       setIsLoggedIn(false);
 
