@@ -1,6 +1,8 @@
 "use client";
 import React, { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
+
 
 type Me = {
   id: number;
@@ -379,44 +381,32 @@ export default function OwnedGamesPage() {
         ) : (
           <ul className="divide-y divide-white/5">
             {items.map((g) => (
-              <li key={g.appId} className="flex items-center gap-4 p-4">
-                <div className="relative h-16 w-28 flex-none overflow-hidden rounded-lg bg-gray-800">
+              <li key={g.appId} className="flex items-center gap-4 p-4 hover:bg-white/5 transition rounded-lg">
+                <Link href={`/games/${g.appId}`} className="relative h-16 w-28 flex-none overflow-hidden rounded-lg bg-gray-800">
                   <Image
                     src={buildHeaderImage(g)}
                     alt={g.name}
                     fill
                     className="object-cover"
-                    sizes="112px" // (w-28 = 112px 정도)
+                    sizes="112px"
                     unoptimized
-                    onError={() => {
-                      /* 필요 시 상태로 대체 이미지 처리 */
-                    }}
                   />
-                </div>
+                </Link>
+
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="truncate pr-2 text-base font-semibold text-slate-100">
+                    <Link
+                      href={`/games/${g.appId}`}
+                      className="truncate pr-2 text-base font-semibold text-slate-100 hover:text-indigo-400 transition"
+                    >
                       {g.name}
-                    </h3>
-                    <span className="text-sm text-slate-300/90">
-                      appid: {g.appId}
-                    </span>
+                    </Link>
+                    <span className="text-sm text-slate-300/90">appid: {g.appId}</span>
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-300">
-                    <span>
-                      총 플레이: <b>{fmtMinutes(g.playtimeForever)}</b>
-                    </span>
-                    <span>
-                      최근 2주: <b>{fmtMinutes(g.playtime2Weeks ?? null)}</b>
-                    </span>
-                    <span>
-                      최근 실행:{" "}
-                      <b>
-                        {g.lastPlayedAt
-                          ? new Date(g.lastPlayedAt).toLocaleString()
-                          : "-"}
-                      </b>
-                    </span>
+                    <span>총 플레이: <b>{fmtMinutes(g.playtimeForever)}</b></span>
+                    <span>최근 2주: <b>{fmtMinutes(g.playtime2Weeks ?? null)}</b></span>
+                    <span>최근 실행: <b>{g.lastPlayedAt ? new Date(g.lastPlayedAt).toLocaleString() : "-"}</b></span>
                   </div>
                 </div>
               </li>
