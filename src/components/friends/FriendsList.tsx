@@ -24,8 +24,11 @@ function getSteamId(f: Friend): string | null {
 
 function getDisplayName(f: Friend): string {
   if (!isObject(f)) return "친구";
+
+  const n0 = (f as Record<string, unknown>).persona_name;
   const n1 = (f as Record<string, unknown>).personaname;
   const n2 = (f as Record<string, unknown>).personaName;
+  if (typeof n0 === "string" && n0.trim()) return n0;
   if (typeof n1 === "string" && n1.trim()) return n1;
   if (typeof n2 === "string" && n2.trim()) return n2;
   return "친구";
