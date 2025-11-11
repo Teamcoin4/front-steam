@@ -10,6 +10,7 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
+    domains: ['cdn.akamai.steamstatic.com'],
     remotePatterns: [
       { protocol: "https", hostname: "avatars.steamstatic.com" },
       { protocol: "https", hostname: "avatars.cloudflare.steamstatic.com" },
